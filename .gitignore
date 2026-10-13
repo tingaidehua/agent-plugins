@@ -29,4 +29,5 @@
 Desktop.ini
 
 # Nested plugin repos are independent; do not nest their trees in the meta repo.
-plugin-*/
+# Nested plugin repos (directories only at root)
+/plugin-*/
