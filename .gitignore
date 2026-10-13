@@ -1,0 +1,32 @@
+# Meta-repo: do not track nested plugin git contents as a monorepo dump.
+# Plugins are separate repos; keep governance files only at the root.
+
+# Nested plugin working trees are independent — ignore common junk everywhere
+**/node_modules/
+**/.DS_Store
+**/Thumbs.db
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+
+# Probe / trajectory / session dumps (privacy)
+**/.probe/
+**/docs/_*.jsonl
+**/*trajectory*
+**/*session*.jsonl
+**/*.pem
+**/*.key
+**/credentials.json
+**/cookies*.txt
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# OS
+Desktop.ini
+
+# Nested plugin repos are independent; do not nest their trees in the meta repo.
+plugin-*/

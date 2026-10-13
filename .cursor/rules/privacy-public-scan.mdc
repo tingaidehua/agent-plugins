@@ -1,0 +1,31 @@
+---
+description: Public plugin leak scan — block secrets, PII, private IPs, machine-local cruft before commit/push
+globs: plugin-*/**/*
+alwaysApply: true
+---
+
+# agent-plugins — public leak scan + generality
+
+Every `plugin-*` folder is a **public GitHub** repo. Before finishing any change that touches plugin source:
+
+## Must scan / refuse to commit
+
+- Secrets: API keys, tokens, cookies, passwords, private keys, auth headers, `.env` **values**
+- PII: real names, phones, emails, WeChat IDs, chat logs, trajectories, session JSONL
+- Private network identity: LAN IPs (`192.168.*`, `10.*`, non-loopback), home hostnames, VPN endpoints — use env vars / placeholders
+- Machine-local absolute paths that embed a username when a relative path or `~` works
+- Browser profiles, Local Extension Settings, credential stores, SQLite dumps with user data
+
+## Generality required
+
+- Prefer env / `~/.dsh` / documented config over hard-coded machine paths
+- Examples in README must be portable (placeholders, not production hosts)
+- No proprietary blobs; no “works only on my PC” defaults
+
+## Allowed
+
+- `127.0.0.1`, `localhost`, documented example ports
+- `.env.example` with **empty or placeholder** values
+- Public docs URLs, public package names
+
+If a leak is found: remove it, rotate the secret if it was ever committed, and rewrite history only when the user explicitly asks.

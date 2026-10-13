@@ -1,0 +1,34 @@
+---
+description: agent-plugins naming — plugin-*-cli interface / product plugins; page plugins = secondary frontend
+globs: plugin-*/**/*
+alwaysApply: false
+---
+
+# agent-plugins 规约 — 命名 + 二次开发本质
+
+## 0. 页内插件 = 原网站二次开发
+
+Chrome 扩展移植、沉浸式翻译等，本质是在宿主页上做前端。完成定义 = 像前端 QA 一样压测原文/双语/译文后无异常。
+
+调试优先级：
+
+1. **Cursor + CDP 探针** — 各插件自己的 `scripts/*`
+2. DeepSeek Harness — 通过 `plugin-cdp-cli` 暴露的同一套钩子
+
+## 1. 包命名
+
+| 形态 | 命名 | 角色 | 例 |
+|------|------|------|-----|
+| 接口层 CLI | `plugin-*-cli` | 贡献者底座；无业务 UI | `plugin-cdp-cli` |
+| 产品 / 端口 | `plugin-*` | 具体能力 | `plugin-cdp-immersivetranslate` |
+| 运维 | `plugin-*` | 部署 / FRP / store | `plugin-frp` |
+
+目录名、`package.json` `name`、cordis `name` 保持一致，统一 `plugin-` 前缀。
+
+## 2. 贡献者契约
+
+1. 新接口能力进 `plugin-*-cli`，不要塞进业务端口
+2. 业务插件 declare dependency on 对应 cli
+3. Cordis bundle 顺序：**cli → 业务端口 → ui**
+4. Desktop 安装用 junction/link 回 `C:\workspace\agent-plugins\plugin-*`
+5. 脚本只放在对应插件目录的 `scripts/`，不要新建根级 scripts
