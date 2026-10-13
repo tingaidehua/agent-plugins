@@ -1,0 +1,13 @@
+---
+description: Clone plugin-* only when the user names them; default is meta-only; Harness uses junction
+globs: "**/*"
+alwaysApply: true
+---
+
+# On-demand plugin checkout
+
+1. Meta repo path: `~/workspace/agent-plugins` (clone from `https://github.com/tingaidehua/agent-plugins`).
+2. **Default: zero `plugin-*` checkouts.** Do not clone, submodule, or sparse-checkout plugins unless the user explicitly names which ones.
+3. When cloning, put repos at `~/workspace/agent-plugins/<plugin-name>` matching the GitHub repo name. Respect deps in `docs/PLUGINS.md`.
+4. Install into DeepSeek Harness with **junction / `dsh plugin add <path>`** pointing at that source tree — never copy snapshots for daily use.
+5. Follow `docs/INSTALL.md` and `AGENTS.md`.

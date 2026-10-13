@@ -1,77 +1,59 @@
 # AGENTS.md — agent-plugins
 
-Meta-workspace that **owns and constrains** public Harness plugin repositories.
-Each `plugin-*` folder is its **own git repo**, published to GitHub as a **public** repository under the same account.
+Meta-repo that **governs** public Harness `plugin-*` repositories.
+Read [README.md](README.md), [docs/PLUGINS.md](docs/PLUGINS.md), and [docs/INSTALL.md](docs/INSTALL.md) before cloning or installing anything.
 
-Do not treat this folder as a pnpm monorepo. There is no root `package.json`. Scripts live inside each plugin.
+## Hard rules
 
-## Hard rules (always apply)
+1. **Public by default.** Every `plugin-*` is open source on GitHub. Maximize generality.
+2. **No privacy data anywhere in this meta tree** (`.agents`, `.cursor`, `docs`, `AGENTS.md`, `README.md`) **or** in any `plugin-*` working tree. Forbidden: secrets, tokens, cookies, chat logs, trajectories, browser profiles, real LAN IPs / hostnames, PII. Config values live in `~/.env` / `~/.dsh` only; ship `.env.example` with key names, never values.
+3. **One plugin = one git repo = one public GitHub repo.** This meta repo must not swallow plugin history.
+4. **On-demand clone only.** After cloning `agent-plugins`, **do not** clone any `plugin-*` unless the user **explicitly** names which plugin(s) they need. Default working tree has **zero** plugin checkouts.
+5. **Harness install = junction / `link:`** to `~/workspace/agent-plugins/plugin-*` (never a copied snapshot). That is how source edits stay live across machines and sessions.
+6. **Scripts live inside each plugin** (`plugin-*/scripts/`). Do not add a root `package.json` or root `scripts/` to the meta repo.
 
-1. **Everything under `plugin-*` is open source / public.** Maximize generality: no machine-specific paths as required config, no single-user assumptions, no private forks, no closed blobs.
-2. **No privacy data in any plugin tree.** Forbidden before commit/push:
-   - API keys, tokens, cookies, passwords, private keys, `.env` with values
-   - Personal notes, chat logs, trajectories, session dumps, browser profiles
-   - Real IPs / hostnames that identify a private network (use placeholders like `127.0.0.1`, `example.com`, env vars)
-   - Phone numbers, emails, WeChat IDs, real names, home paths with usernames when avoidable
-3. **Config lives outside the repo.** Prefer `~/.env`, `process.env`, or `~/.dsh`. Ship `.env.example` with **key names only**, never values.
-4. **Cursor must scan for leaks** before claiming a plugin change is done (see `.cursor/rules/privacy-public-scan.mdc`).
-5. **One plugin = one git repo = one GitHub public repo.** Parent `agent-plugins` only holds governance docs/rules and lists plugins; it must not swallow plugin history as a monorepo.
-6. **Desktop install = junction / `link:`** to `C:\workspace\agent-plugins\plugin-*` (never a copied snapshot).
+## Bootstrap protocol (for any agent)
 
-## Layout
+```text
+1. Ensure meta exists:
+     git clone https://github.com/tingaidehua/agent-plugins.git ~/workspace/agent-plugins
+   (skip if already present)
+
+2. Ask / wait: which plugin-* does the user need?
+   If none named → STOP. Do not download plugins.
+
+3. For each named plugin (see docs/PLUGINS.md for deps):
+     cd ~/workspace/agent-plugins
+     git clone https://github.com/tingaidehua/<name>.git <name>
+   Pull deps first (e.g. plugin-cdp-cli before plugin-cdp-immersivetranslate).
+
+4. Install into Harness via junction / dsh plugin add (docs/INSTALL.md).
+   Quit Desktop before changing junctions.
+```
+
+Path convention: prefer `~/workspace/agent-plugins`. On Windows that is `$HOME\workspace\agent-plugins`; if the machine already uses `C:\workspace`, keep that convention consistently.
+
+## Layout (meta only)
 
 ```
-agent-plugins/                          # meta repo (governance only)
+agent-plugins/                 # this git repo
+  README.md
   AGENTS.md
-  docs/
-  .cursor/rules/                        # Cursor constraints
-  plugin-cdp-cli/                       # own git → GitHub public
-  plugin-cdp-immersivetranslate/        # own git → GitHub public
-  plugin-hermes-bridge/
-  plugin-frp/
-  plugin-ops-store/
-  plugin-deploy-nginx/
-  plugin-deploy-web/
-  plugin-manage-server/
+  docs/PLUGINS.md              # catalog + relationships
+  docs/INSTALL.md              # clone + junction
+  .cursor/rules/               # Cursor constraints (no secrets)
+  plugin-*/                    # NOT in meta git — cloned on demand
 ```
 
 ## Naming
 
 | Pattern | Role |
 |---------|------|
-| `plugin-*-cli` | Interface / fabric for contributors (no product UI) |
-| `plugin-*` | Product / ops / bridge plugins |
-| Prefer `plugin-` prefix for **directory name, package.json `name`, and cordis `name`** |
+| `plugin-*-cli` | Interface / fabric (no product UI) |
+| `plugin-*` | Product, bridge, or ops plugin |
 
-## Desktop install (junction)
+Directory name, `package.json` `name`, and cordis `name` must match.
 
-Quit DeepSeek Harness Desktop first:
+## Privacy scan before any commit/push
 
-```powershell
-$dsh = "$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd"
-& $dsh plugin --profile desktop add C:\workspace\agent-plugins\plugin-cdp-cli
-& $dsh plugin --profile desktop add C:\workspace\agent-plugins\plugin-cdp-immersivetranslate
-& $dsh plugin --profile desktop add C:\workspace\agent-plugins\plugin-ops-store
-& $dsh plugin --profile desktop add C:\workspace\agent-plugins\plugin-frp
-& $dsh plugin --profile desktop list
-```
-
-Bundle order for CDP translate: **`plugin-cdp-cli` before `plugin-cdp-immersivetranslate`**.
-
-## Per-plugin smoke
-
-```powershell
-node C:\workspace\agent-plugins\plugin-cdp-cli\scripts\smoke.mjs
-node C:\workspace\agent-plugins\plugin-cdp-immersivetranslate\scripts\smoke.mjs
-# IMT gates (inside plugin-cdp-immersivetranslate):
-#   node scripts/frontend-sweep.mjs && node scripts/aside-gate.mjs && ...
-```
-
-## ~/.env keys (examples only)
-
-| Key | Purpose |
-|-----|---------|
-| `DSH_CDP_ENDPOINTS` | Comma-separated ports or base URLs |
-| `DSH_CDP_DEFAULT_PORT` | Default attach port |
-| `DSH_IMT_STORE` | Optional SQLite path for immersive translate cache |
-| `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | Standalone LLM fallback |
+Scan **meta files and every checked-out `plugin-*`** for leaks (see `.cursor/rules/privacy-public-scan.mdc`). Refuse to commit secrets or machine-identifying data.

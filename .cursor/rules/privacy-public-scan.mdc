@@ -1,31 +1,31 @@
 ---
-description: Public plugin leak scan — block secrets, PII, private IPs, machine-local cruft before commit/push
-globs: plugin-*/**/*
+description: Public leak scan for meta (.agents/.cursor/docs) and every plugin-* checkout
+globs: "**/*"
 alwaysApply: true
 ---
 
-# agent-plugins — public leak scan + generality
+# agent-plugins — public leak scan
 
-Every `plugin-*` folder is a **public GitHub** repo. Before finishing any change that touches plugin source:
+This meta repo and every `plugin-*` checkout are **public**. Scan before commit/push.
 
-## Must scan / refuse to commit
+## Scope
+
+- Meta: `AGENTS.md`, `README.md`, `docs/**`, `.cursor/**`, `.agents/**`
+- Every checked-out `plugin-*/**`
+
+## Refuse to commit
 
 - Secrets: API keys, tokens, cookies, passwords, private keys, auth headers, `.env` **values**
-- PII: real names, phones, emails, WeChat IDs, chat logs, trajectories, session JSONL
-- Private network identity: LAN IPs (`192.168.*`, `10.*`, non-loopback), home hostnames, VPN endpoints — use env vars / placeholders
-- Machine-local absolute paths that embed a username when a relative path or `~` works
-- Browser profiles, Local Extension Settings, credential stores, SQLite dumps with user data
-
-## Generality required
-
-- Prefer env / `~/.dsh` / documented config over hard-coded machine paths
-- Examples in README must be portable (placeholders, not production hosts)
-- No proprietary blobs; no “works only on my PC” defaults
+- PII: real names, phones, emails, WeChat IDs, chat logs, trajectories, session dumps
+- Private network identity: LAN IPs (`192.168.*`, `10.*`, non-loopback), home hostnames, VPN endpoints
+- Machine-local absolute paths that embed a username when `~/workspace/...` works
+- Browser profiles, credential stores, SQLite dumps with user data
 
 ## Allowed
 
-- `127.0.0.1`, `localhost`, documented example ports
-- `.env.example` with **empty or placeholder** values
-- Public docs URLs, public package names
+- `127.0.0.1`, `localhost`, example ports
+- `.env.example` with empty / placeholder values
+- Public GitHub URLs under `tingaidehua/*`
+- Key **names** in docs (never values)
 
-If a leak is found: remove it, rotate the secret if it was ever committed, and rewrite history only when the user explicitly asks.
+If a leak is found: remove it; rotate the secret if it was ever pushed; rewrite history only when the user explicitly asks.
